@@ -208,8 +208,27 @@ export default function OpportunityDiscovery({ userRole, searchQuery: globalSear
     { label: 'Applied', value: jobs.filter(j => j.status === 'applied').length, icon: Send, color: 'from-orange-500 to-orange-600', bgColor: 'bg-orange-50', textColor: 'text-orange-600' },
   ];
 
-  const handleApply = (jobId: number) => {
-    alert(`Application submitted successfully for job ID: ${jobId}. You will be notified about next steps.`);
+  const handleApply = (job: Job) => {
+    // Open company website if available, otherwise show alert
+    if (job.website) {
+      window.open(job.website, '_blank', 'noopener,noreferrer');
+    } else {
+      alert(`Please visit ${job.company}'s career page to apply for this position.`);
+    }
+  };
+
+  const handleSave = (jobId: number) => {
+    setJobs(prevJobs => 
+      prevJobs.map(job => 
+        job.id === jobId 
+          ? { ...job, status: job.status === 'saved' ? 'new' : 'saved' as 'new' | 'applied' | 'saved' }
+          : job
+      )
+    );
+  };
+
+  const handleSetAlert = (job: Job) => {
+    alert(`Alert set for ${job.role} at ${job.company}! You'll be notified about updates and similar opportunities.`);
   };
 
   return (
@@ -466,15 +485,19 @@ export default function OpportunityDiscovery({ userRole, searchQuery: globalSear
                   <p className="text-slate-600 mb-4 leading-relaxed line-clamp-2">{job.description}</p>
 
                   <div className="flex items-center gap-3">
-                    <Button onClick={(e) => { e.stopPropagation(); handleApply(job.id); }} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                    <Button onClick={(e) => { e.stopPropagation(); handleApply(job); }} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                       <Send className="size-4 mr-2" />
                       {job.status === 'applied' ? 'Applied' : 'Apply Now'}
                     </Button>
-                    <Button variant="outline" onClick={(e) => { e.stopPropagation(); }} className="border-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={(e) => { e.stopPropagation(); handleSave(job.id); }} 
+                      className={`border-2 ${job.status === 'saved' ? 'bg-yellow-50 border-yellow-400 text-yellow-700' : ''}`}
+                    >
                       <BookmarkPlus className="size-4 mr-2" />
-                      Save
+                      {job.status === 'saved' ? 'Saved' : 'Save'}
                     </Button>
-                    <Button variant="outline" onClick={(e) => { e.stopPropagation(); }} className="border-2">
+                    <Button variant="outline" onClick={(e) => { e.stopPropagation(); handleSetAlert(job); }} className="border-2">
                       <Bell className="size-4 mr-2" />
                       Set Alert
                     </Button>
@@ -519,11 +542,22 @@ export default function OpportunityDiscovery({ userRole, searchQuery: globalSear
                     ))}
                   </div>
                   <div className="flex items-center gap-3 mt-4">
-                    <Button onClick={(e) => { e.stopPropagation(); handleApply(job.id); }} className="bg-green-600 hover:bg-green-700">
+                    <Button onClick={(e) => { e.stopPropagation(); handleApply(job); }} className="bg-green-600 hover:bg-green-700">
                       <Send className="size-4 mr-2" />
                       Apply Now
                     </Button>
-                    <Button variant="outline" className="border-2">View Details</Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={(e) => { e.stopPropagation(); handleSave(job.id); }} 
+                      className={`border-2 ${job.status === 'saved' ? 'bg-yellow-50 border-yellow-400' : ''}`}
+                    >
+                      <BookmarkPlus className="size-4 mr-2" />
+                      {job.status === 'saved' ? 'Saved' : 'Save'}
+                    </Button>
+                    <Button variant="outline" onClick={(e) => { e.stopPropagation(); handleSetAlert(job); }} className="border-2">
+                      <Bell className="size-4 mr-2" />
+                      Set Alert
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -544,8 +578,19 @@ export default function OpportunityDiscovery({ userRole, searchQuery: globalSear
                       <h3 className="text-xl font-bold text-slate-900 mb-1">{job.role}</h3>
                       <p className="text-sm text-slate-600 mb-3">{job.company} • {job.location}</p>
                       <div className="flex gap-3">
-                        <Button onClick={() => handleApply(job.id)}>Apply Now</Button>
-                        <Button variant="outline" onClick={() => setSelectedJob(job)}>View Details</Button>
+                        <Button onClick={() => handleApply(job)}>Apply Now</Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => handleSave(job.id)}
+                          className={job.status === 'saved' ? 'bg-yellow-50 border-yellow-400' : ''}
+                        >
+                          <BookmarkPlus className="size-4 mr-2" />
+                          {job.status === 'saved' ? 'Saved' : 'Save'}
+                        </Button>
+                        <Button variant="outline" onClick={() => handleSetAlert(job)}>
+                          <Bell className="size-4 mr-2" />
+                          Set Alert
+                        </Button>
                       </div>
                     </div>
                     <Badge className="bg-yellow-600">Saved</Badge>
@@ -690,16 +735,21 @@ export default function OpportunityDiscovery({ userRole, searchQuery: globalSear
                 </div>
 
                 <div className="flex items-center gap-3 pt-4 border-t-2">
-                  <Button className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg" onClick={() => handleApply(selectedJob.id)}>
+                  <Button className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg" onClick={() => handleApply(selectedJob)}>
                     <Send className="size-5 mr-2" />
                     Apply Now
                   </Button>
-                  <Button variant="outline" className="flex-1 h-12 border-2 text-lg">
+                  <Button 
+                    variant="outline" 
+                    className={`flex-1 h-12 border-2 text-lg ${selectedJob.status === 'saved' ? 'bg-yellow-50 border-yellow-400 text-yellow-700' : ''}`}
+                    onClick={() => handleSave(selectedJob.id)}
+                  >
                     <BookmarkPlus className="size-5 mr-2" />
-                    Save for Later
+                    {selectedJob.status === 'saved' ? 'Saved' : 'Save for Later'}
                   </Button>
-                  <Button variant="outline" className="h-12 border-2">
-                    <ExternalLink className="size-5" />
+                  <Button variant="outline" className="h-12 border-2" onClick={() => handleSetAlert(selectedJob)}>
+                    <Bell className="size-5 mr-2" />
+                    Set Alert
                   </Button>
                 </div>
               </div>

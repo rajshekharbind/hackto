@@ -60,6 +60,11 @@ export default function MockInterview({ userRole, searchQuery: globalSearchQuery
   const [selectedSession, setSelectedSession] = useState<InterviewSession | null>(null);
   const [showResults, setShowResults] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSetupDialog, setShowSetupDialog] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [microphoneReady, setMicrophoneReady] = useState(false);
+  const [audioReady, setAudioReady] = useState(false);
+  const [permissionError, setPermissionError] = useState('');
   
   // Use global search if provided, otherwise use local search
   const activeSearchQuery = globalSearchQuery || searchQuery;
@@ -202,6 +207,42 @@ export default function MockInterview({ userRole, searchQuery: globalSearchQuery
     setIsInterviewActive(true);
     setCurrentQuestion(0);
     setUserAnswer('');
+    setShowSetupDialog(false);
+  };
+
+  const checkPermissions = async () => {
+    setPermissionError('');
+    setCameraReady(false);
+    setMicrophoneReady(false);
+    setAudioReady(false);
+
+    try {
+      // Request camera permission
+      const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setCameraReady(true);
+      videoStream.getTracks().forEach(track => track.stop()); // Stop the stream after checking
+
+      // Request microphone permission
+      const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicrophoneReady(true);
+      setAudioReady(true);
+      audioStream.getTracks().forEach(track => track.stop()); // Stop the stream after checking
+
+    } catch (error: any) {
+      console.error('Permission error:', error);
+      if (error.name === 'NotAllowedError') {
+        setPermissionError('Camera or microphone access denied. Please allow permissions in your browser settings.');
+      } else if (error.name === 'NotFoundError') {
+        setPermissionError('Camera or microphone not found. Please check your device connections.');
+      } else {
+        setPermissionError('Error accessing camera/microphone. Please check your browser settings.');
+      }
+    }
+  };
+
+  const handleStartMockInterview = () => {
+    setShowSetupDialog(true);
+    checkPermissions();
   };
 
   const stopInterview = () => {
@@ -341,7 +382,7 @@ export default function MockInterview({ userRole, searchQuery: globalSearchQuery
                   </div>
                 </div>
 
-                <Button className="w-full h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg font-semibold shadow-lg" size="lg" onClick={startInterview}>
+                <Button className="w-full h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg font-semibold shadow-lg" size="lg" onClick={handleStartMockInterview}>
                   <Play className="size-6 mr-2" />
                   Start Mock Interview
                 </Button>
@@ -780,6 +821,194 @@ export default function MockInterview({ userRole, searchQuery: globalSearchQuery
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Setup Check Dialog */}
+      <Dialog open={showSetupDialog} onOpenChange={setShowSetupDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl md:text-3xl flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl">
+                <Sparkles className="size-6 md:size-7 text-white" />
+              </div>
+              Start New Interview
+            </DialogTitle>
+            <p className="text-sm md:text-base text-slate-600 mt-2">
+              Configure your AI-powered mock interview session
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Interview Configuration */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-2 block">
+                  Interview Type
+                </label>
+                <Select value={interviewType} onValueChange={setInterviewType}>
+                  <SelectTrigger className="h-12 border-2">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Technical">Technical Interview</SelectItem>
+                    <SelectItem value="HR">HR Interview</SelectItem>
+                    <SelectItem value="Behavioral">Behavioral Interview</SelectItem>
+                    <SelectItem value="Case Study">Case Study</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-2 block">
+                  Target Role
+                </label>
+                <Select value={interviewRole} onValueChange={setInterviewRole}>
+                  <SelectTrigger className="h-12 border-2">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Software Engineer">Software Engineer</SelectItem>
+                    <SelectItem value="Data Scientist">Data Scientist</SelectItem>
+                    <SelectItem value="Product Manager">Product Manager</SelectItem>
+                    <SelectItem value="Business Analyst">Business Analyst</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* What to Expect */}
+            <Card className="p-4 md:p-5 border-2 border-blue-200 bg-blue-50/50">
+              <div className="flex items-start gap-2 mb-3">
+                <Brain className="size-5 text-blue-600 mt-0.5" />
+                <h4 className="font-bold text-slate-900">What to expect:</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex items-start gap-2">
+                  <MessageSquare className="size-4 text-blue-600 mt-1 shrink-0" />
+                  <span className="text-sm text-slate-700">5 AI-generated questions tailored to your role</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Clock className="size-4 text-blue-600 mt-1 shrink-0" />
+                  <span className="text-sm text-slate-700">Real-time feedback on your responses</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Star className="size-4 text-blue-600 mt-1 shrink-0" />
+                  <span className="text-sm text-slate-700">Detailed scoring on multiple parameters</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Award className="size-4 text-blue-600 mt-1 shrink-0" />
+                  <span className="text-sm text-slate-700">Personalized improvement recommendations</span>
+                </div>
+              </div>
+            </Card>
+
+            {/* Setup Check */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Camera className="size-5 text-purple-600" />
+                <h4 className="font-bold text-slate-900">Setup Check</h4>
+              </div>
+
+              {permissionError && (
+                <div className="mb-4 p-3 bg-red-50 border-2 border-red-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="size-5 text-red-600 mt-0.5 shrink-0" />
+                    <p className="text-sm text-red-700">{permissionError}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                {/* Camera Check */}
+                <Card className="p-4 border-2 hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${cameraReady ? 'bg-green-100' : 'bg-slate-100'}`}>
+                        <Camera className={`size-5 ${cameraReady ? 'text-green-600' : 'text-slate-400'}`} />
+                      </div>
+                      <span className="font-medium text-slate-900">Camera</span>
+                    </div>
+                    <Badge className={cameraReady ? 'bg-green-600' : 'bg-slate-300 text-slate-600'}>
+                      {cameraReady ? 'Ready' : 'Checking...'}
+                    </Badge>
+                  </div>
+                </Card>
+
+                {/* Microphone Check */}
+                <Card className="p-4 border-2 hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${microphoneReady ? 'bg-green-100' : 'bg-slate-100'}`}>
+                        <Mic className={`size-5 ${microphoneReady ? 'text-green-600' : 'text-slate-400'}`} />
+                      </div>
+                      <span className="font-medium text-slate-900">Microphone</span>
+                    </div>
+                    <Badge className={microphoneReady ? 'bg-green-600' : 'bg-slate-300 text-slate-600'}>
+                      {microphoneReady ? 'Ready' : 'Checking...'}
+                    </Badge>
+                  </div>
+                </Card>
+
+                {/* Audio Check */}
+                <Card className="p-4 border-2 hover:shadow-md transition-all">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${audioReady ? 'bg-green-100' : 'bg-slate-100'}`}>
+                        <Volume2 className={`size-5 ${audioReady ? 'text-green-600' : 'text-slate-400'}`} />
+                      </div>
+                      <span className="font-medium text-slate-900">Audio</span>
+                    </div>
+                    <Badge className={audioReady ? 'bg-green-600' : 'bg-slate-300 text-slate-600'}>
+                      {audioReady ? 'Ready' : 'Checking...'}
+                    </Badge>
+                  </div>
+                </Card>
+              </div>
+            </div>
+
+            {/* Interview Tips */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Award className="size-5 text-yellow-600" />
+                <h4 className="font-bold text-slate-900">Interview Tips</h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Card className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200">
+                  <h5 className="font-bold text-blue-900 mb-1">Be Structured</h5>
+                  <p className="text-sm text-blue-700">Use frameworks like STAR for behavioral questions</p>
+                </Card>
+                <Card className="p-4 bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200">
+                  <h5 className="font-bold text-green-900 mb-1">Think Aloud</h5>
+                  <p className="text-sm text-green-700">Share your thought process while solving problems</p>
+                </Card>
+                <Card className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200">
+                  <h5 className="font-bold text-purple-900 mb-1">Ask Questions</h5>
+                  <p className="text-sm text-purple-700">Don't hesitate to clarify requirements</p>
+                </Card>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t-2">
+              <Button 
+                className="flex-1 h-12 md:h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-base md:text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed" 
+                size="lg" 
+                onClick={startInterview}
+                disabled={!cameraReady || !microphoneReady || !audioReady}
+              >
+                <Play className="size-5 md:size-6 mr-2" />
+                Start Mock Interview
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-12 md:h-14 border-2 text-base md:text-lg px-6"
+                onClick={() => setShowSetupDialog(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
