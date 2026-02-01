@@ -51,7 +51,18 @@ export default function CompaniesDirectory({ searchQuery = '' }: CompaniesDirect
       setLoading(true);
       console.log('Fetching companies from API...');
       
-      const response = await fetch('http://localhost:5000/api/companies');
+      // Check if API base URL is configured
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+      if (!apiBaseUrl) {
+        console.error('❌ VITE_API_BASE_URL is not configured in .env file');
+        alert('Error: API URL not configured. Please check .env file.');
+        setCompanies([]);
+        setLoading(false);
+        return;
+      }
+      
+      console.log('API Base URL:', apiBaseUrl);
+      const response = await fetch(`${apiBaseUrl}/api/companies`);
       console.log('Response status:', response.status, response.statusText);
       
       if (!response.ok) {
@@ -62,18 +73,20 @@ export default function CompaniesDirectory({ searchQuery = '' }: CompaniesDirect
       console.log('Companies API Response:', data);
       
       if (data.success && Array.isArray(data.companies)) {
-        console.log('Setting companies:', data.companies.length, 'items');
+        console.log('✅ Setting companies:', data.companies.length, 'items');
         setCompanies(data.companies);
       } else if (Array.isArray(data)) {
-        console.log('Setting companies (direct array):', data.length, 'items');
+        console.log('✅ Setting companies (direct array):', data.length, 'items');
         setCompanies(data);
       } else {
         console.error('Unexpected data format:', data);
         setCompanies([]);
       }
     } catch (error) {
-      console.error('Error fetching companies:', error);
-      alert('Failed to fetch companies. Please ensure the backend server is running on http://localhost:5000');
+      console.error('❌ Error fetching companies:', error);
+      console.error('💡 Solution: Make sure backend server is running on http://localhost:5000');
+      console.error('   Start it with: cd backend && npm start');
+      alert(`⚠️ Backend Connection Error\n\nCannot connect to ${import.meta.env.VITE_API_BASE_URL}\n\nPlease ensure:\n1. Backend server is running (npm start in backend folder)\n2. Server is on http://localhost:5000\n3. Check STARTUP_GUIDE.md for help`);
       setCompanies([]);
     } finally {
       setLoading(false);
@@ -85,7 +98,7 @@ export default function CompaniesDirectory({ searchQuery = '' }: CompaniesDirect
       setLoadingRecruiters(true);
       console.log('Fetching recruiters for company ID:', companyId);
       
-      const response = await fetch(`http://localhost:5000/api/recruiters?companyId=${companyId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/recruiters?companyId=${companyId}`);
       const data = await response.json();
       
       console.log('Recruiters API Response:', data);

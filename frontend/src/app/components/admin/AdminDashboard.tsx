@@ -32,7 +32,20 @@ export default function AdminDashboard() {
   const fetchCompanies = async () => {
     try {
       setLoadingCompanies(true);
-      const response = await fetch('http://localhost:5000/api/companies');
+      
+      // Check if API base URL is configured
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+      if (!apiBaseUrl) {
+        console.error('VITE_API_BASE_URL is not configured in .env file');
+        return;
+      }
+      
+      const response = await fetch(`${apiBaseUrl}/api/companies`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       if (data.success && Array.isArray(data.companies)) {
@@ -40,6 +53,8 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       console.error('Error fetching companies:', error);
+      console.error('Make sure the backend server is running on http://localhost:5000');
+      console.error('Start it with: cd backend && npm start');
     } finally {
       setLoadingCompanies(false);
     }

@@ -67,10 +67,17 @@ export default function OpportunityDiscovery({ userRole, searchQuery: globalSear
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch('http://localhost:5000/api/jobs/enriched');
+        
+        // Check if API base URL is configured
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+        if (!apiBaseUrl) {
+          throw new Error('API URL not configured. Please check .env file for VITE_API_BASE_URL');
+        }
+        
+        const response = await fetch(`${apiBaseUrl}/api/jobs/enriched`);
         
         if (!response.ok) {
-          throw new Error(`Backend server not responding (status: ${response.status})`);
+          throw new Error(`Backend server error (status: ${response.status}). Make sure server is running on ${apiBaseUrl}`);
         }
         
         const data = await response.json();

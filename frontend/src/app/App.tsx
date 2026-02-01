@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useClerk } from '@clerk/clerk-react';
-import { Building2, Briefcase, Video, LayoutDashboard, Users, LogOut, Settings, User, Bell, Search } from 'lucide-react';
+import { Building2, Briefcase, Video, LayoutDashboard, Users, LogOut, Settings, User, Bell, Search, BookOpen, Megaphone, Moon, Sun } from 'lucide-react';
 import Dashboard from '@/app/components/Dashboard';
 import OpportunityDiscovery from '@/app/components/OpportunityDiscovery';
 import RecruiterOutreach from '@/app/components/RecruiterOutreach';
@@ -9,6 +9,11 @@ import Analytics from '@/app/components/Analytics';
 import Auth from '@/app/components/Auth';
 import Profile from '@/app/components/Profile';
 import AdminPanel from '@/app/components/admin/AdminPanel';
+import StudentProfile from '@/app/components/StudentProfile';
+import Jobs from '@/app/components/Jobs';
+import CompanyDetail from '@/app/components/CompanyDetail';
+import Blogs from '@/app/components/Blogs';
+import Announcements from '@/app/components/Announcements';
 import { Badge } from '@/app/components/ui/badge';
 import { Input } from '@/app/components/ui/input';
 import {
@@ -20,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/app/components/ui/dropdown-menu';
 
-type View = 'dashboard' | 'opportunities' | 'recruiters' | 'interview' | 'analytics' | 'profile';
+type View = 'dashboard' | 'opportunities' | 'recruiters' | 'interview' | 'analytics' | 'profile' | 'studentProfile' | 'jobs' | 'blogs' | 'announcements' | 'companies';
 
 interface UserData {
   name: string;
@@ -35,13 +40,16 @@ export default function App() {
   const [user, setUser] = useState<UserData | null>(null);
   const [notifications] = useState(7);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [darkMode, setDarkMode] = useState(false);
   const { signOut } = useClerk();
 
   const navigation = [
     { id: 'dashboard' as View, name: 'Dashboard', icon: LayoutDashboard },
-    { id: 'opportunities' as View, name: 'Opportunities', icon: Briefcase },
-    { id: 'recruiters' as View, name: 'Recruiters', icon: Building2 },
+    { id: 'jobs' as View, name: 'Jobs', icon: Briefcase },
+    { id: 'companies' as View, name: 'Companies', icon: Building2 },
     { id: 'interview' as View, name: 'Mock Interview', icon: Video },
+    { id: 'blogs' as View, name: 'Blogs', icon: BookOpen },
+    { id: 'announcements' as View, name: 'Announcements', icon: Megaphone },
     { id: 'analytics' as View, name: 'Analytics', icon: Users },
   ];
 
@@ -89,16 +97,26 @@ export default function App() {
     switch (currentView) {
       case 'dashboard':
         return <Dashboard setView={handleViewChange} userRole={user.role} userName={user.name} searchQuery={globalSearchQuery} />;
+      case 'jobs':
+        return <Jobs />;
+      case 'companies':
+        return <CompanyDetail />;
       case 'opportunities':
         return <OpportunityDiscovery userRole={user.role} searchQuery={globalSearchQuery} setView={handleViewChange} />;
       case 'recruiters':
         return <RecruiterOutreach userRole={user.role} searchQuery={globalSearchQuery} setView={handleViewChange} />;
       case 'interview':
         return <MockInterview userRole={user.role} searchQuery={globalSearchQuery} setView={handleViewChange} />;
+      case 'blogs':
+        return <Blogs />;
+      case 'announcements':
+        return <Announcements />;
       case 'analytics':
         return <Analytics userRole={user.role} searchQuery={globalSearchQuery} setView={handleViewChange} />;
       case 'profile':
         return <Profile user={user} onUpdate={setUser} />;
+      case 'studentProfile':
+        return <StudentProfile />;
       default:
         return <Dashboard setView={handleViewChange} userRole={user.role} userName={user.name} />;
     }
@@ -210,6 +228,10 @@ export default function App() {
                 <User className="size-4 mr-2" />
                 Profile
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleViewChange('studentProfile')}>
+                <User className="size-4 mr-2" />
+                Complete Profile
+              </DropdownMenuItem>
               <DropdownMenuItem>
                 <Settings className="size-4 mr-2" />
                 Settings
@@ -255,6 +277,18 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-2 md:gap-3">
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 md:p-2.5 hover:bg-slate-100 rounded-xl transition-colors"
+              >
+                {darkMode ? (
+                  <Sun className="size-5 md:size-6 text-yellow-500" />
+                ) : (
+                  <Moon className="size-5 md:size-6 text-slate-600" />
+                )}
+              </button>
+
               {/* Notifications */}
               <button className="relative p-2 md:p-2.5 hover:bg-slate-100 rounded-xl transition-colors">
                 <Bell className="size-5 md:size-6 text-slate-600" />

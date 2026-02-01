@@ -493,11 +493,12 @@ export default function MockInterview({ userRole, searchQuery: globalSearchQuery
                     })}
                   </div>
                 </div>
-
+                <a href={import.meta.env.VITE_MOCK_INTERVIEW_URL} >
                 <Button className="w-full h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-lg font-semibold shadow-lg" size="lg" onClick={handleStartMockInterview}>
                   <Play className="size-6 mr-2" />
                   Start Mock Interview
                 </Button>
+                </a>
               </div>
             </Card>
 
